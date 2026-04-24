@@ -1,0 +1,12 @@
+# 配置文件中包含敏感信息，不提交
+config.yml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+
+# IDE
+.vscode/
+.idea/
