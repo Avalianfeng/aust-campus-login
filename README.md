@@ -58,11 +58,6 @@ isp: "unicom"  # 运营商：unicom / telecom / mobile
 | telecom | 中国电信 | @telecom |
 | mobile | 中国移动 | @mobile |
 
-## 隐私说明
-
-- `config.yml` 包含真实账号，**不会**上传到 GitHub
-- `.gitignore` 已屏蔽配置文件
-
 ## 免责声明
 
 本项目仅供安徽理工大学(AUST)在校师生学习交流使用，请遵守学校相关规定。
