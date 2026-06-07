@@ -1,63 +1,74 @@
 # 安徽理工大学(AUST)校园网自动登录
 
-> 专供安徽理工大学校园网使用 | 支持联通/电信/移动全运营商
+专供安理工 Dr.COM Web 认证，支持联通 / 电信 / 移动 / 教职工。
 
-## 功能特性
+## 修复说明（相比原版）
 
-- 专为本校校园网定制（网关：`10.255.0.19`）
-- 支持联通、电信、移动全运营商
-- 开机自动检测网络状态
-- Windows 平台通知提醒
-- 配置文件分离，账号信息不外泄
+原脚本用 `http://www.baidu.com` 且把 **302 当成已联网**。未认证时访问外网会被门户 **302 到 10.255.0.19**，因此断网也显示「无需登录」。
 
-## 项目结构
+现改为：
 
-```
-campus-login/
-├── AutoLogin.py      # 主脚本
-├── config.yml        # 配置文件（自行填写，不上传）
-├── config.yml.example # 配置模板
-├── requirements.txt  # Python 依赖
-└── 运行.bat          # Windows 一键启动
-```
+1. **外网探测**：`generate_204` / `msftconnecttest`，只有真连通才算在线  
+2. **门户检测**：读取 `10.255.0.19` 页面中的 `Dr.COMWebLoginID_1`（已登录）/ `_0`（未登录）  
+3. **登录方式**：改为 Dr.COM 标准 GET + JSON 回调（与 [iPanda92/AutoLogin](https://github.com/iPanda92/AutoLogin) 一致）  
+4. **运营商后缀**：电信为 `@aust`（不是 `@telecom`）
 
 ## 快速开始
 
-### 1. 安装依赖
-
-双击运行 `安装依赖.bat`，或手动执行：
-```bash
-pip install requests pyyaml
+```powershell
+cd D:\wifi\aust-campus-login
+pip install -r requirements.txt
+copy config.yml.example config.yml   # 首次
+# 编辑 config.yml 填入学号密码
 ```
 
-### 2. 配置账号
+### 手动运行
 
-复制 `config.yml.example` 为 `config.yml`，填入你的信息：
+| 方式 | 命令 |
+|------|------|
+| 双击 | `运行.bat` |
+| 仅检测 | `python AutoLogin.py --check` |
+| 单次登录 | `python AutoLogin.py --once` |
+| 守护循环 | `python AutoLogin.py --watch` 或 `守护模式.bat` |
+
+### 定时任务（推荐）
+
+以管理员打开 PowerShell：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "D:\wifi\aust-campus-login\安装定时任务.ps1"
+```
+
+将创建 **每 5 分钟** 运行一次的 `AUST-Campus-Login-Watchdog` 任务（无弹窗、写日志）。
+
+日志位置：
+
+- `logs/campus-login.log` — 主日志  
+- `logs/task.log` — 计划任务 stdout
+
+### 登录成功后重启 Cloudflare Tunnel（可选）
+
+在 `config.yml` 中取消注释：
 
 ```yaml
-url: "http://10.255.0.19/drcom/login"
-username: "你的学号"
-password: "你的密码"
-isp: "unicom"  # 运营商：unicom / telecom / mobile
+post_login_cmd: "pm2 restart cloudflared"
 ```
 
-### 3. 运行
+## 运营商对照
 
-双击 `运行.bat` 即可自动登录。
+| isp 值 | 后缀 |
+|--------|------|
+| unicom | @unicom |
+| telecom | @aust |
+| mobile | @cmcc |
+| jzg | @jzg |
 
-### 4. 开机自启动
+## 删除定时任务
 
-1. 按 `Win + R`，输入 `shell:startup`
-2. 创建快捷方式，指向 `运行.bat`
-
-## 运营商支持
-
-| ISP 值 | 运营商 | 后缀 |
-|--------|--------|------|
-| unicom | 中国联通 | @unicom |
-| telecom | 中国电信 | @telecom |
-| mobile | 中国移动 | @mobile |
+```powershell
+Unregister-ScheduledTask -TaskName "AUST-Campus-Login-Watchdog" -Confirm:$false
+```
 
 ## 免责声明
 
-本项目仅供安徽理工大学(AUST)在校师生学习交流使用，请遵守学校相关规定。
+仅供安理工在校师生学习交流，请遵守学校相关规定。
