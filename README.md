@@ -2,17 +2,6 @@
 
 专供安理工 Dr.COM Web 认证，支持联通 / 电信 / 移动 / 教职工。
 
-## 修复说明（相比原版）
-
-原脚本用 `http://www.baidu.com` 且把 **302 当成已联网**。未认证时访问外网会被门户 **302 到 10.255.0.19**，因此断网也显示「无需登录」。
-
-现改为：
-
-1. **外网探测**：`generate_204` / `msftconnecttest`，只有真连通才算在线  
-2. **门户检测**：读取 `10.255.0.19` 页面中的 `Dr.COMWebLoginID_1`（已登录）/ `_0`（未登录）  
-3. **登录方式**：改为 Dr.COM 标准 GET + JSON 回调（与 [iPanda92/AutoLogin](https://github.com/iPanda92/AutoLogin) 一致）  
-4. **运营商后缀**：电信为 `@aust`（不是 `@telecom`）
-
 ## 快速开始
 
 ```powershell
@@ -22,37 +11,49 @@ copy config.yml.example config.yml   # 首次
 # 编辑 config.yml 填入学号密码
 ```
 
-### 手动运行
+**双击 [`管理.bat`](管理.bat)** 打开交互菜单，所有操作都在里面完成。
 
-| 方式 | 命令 |
+## 交互菜单
+
+```
+========== AUST 校园网 ==========
+网络状态 / 门户状态 / 自动保活 / 计划任务 / 最近日志
+================================
+[1] 立即检测并登录（单次）
+[2] 开启后台保活（静默，每5分钟）
+[3] 关闭后台保活
+[4] 前台守护（本窗口循环）
+[5] 查看最近 10 条日志
+[0] 退出
+```
+
+## 使用场景
+
+| 场景 | 操作 |
 |------|------|
-| 双击 | `运行.bat` |
-| 仅检测 | `python AutoLogin.py --check` |
-| 单次登录 | `python AutoLogin.py --once` |
-| 守护循环 | `python AutoLogin.py --watch` 或 `守护模式.bat` |
+| 手动登录一次 | 菜单 `[1]`，或双击 `运行.bat` |
+| 晚上 / 挂机静默保活 | 菜单 `[2]`（需管理员权限注册计划任务） |
+| 白天 / 不想后台跑 | 菜单 `[3]` |
+| 前台调试循环检测 | 菜单 `[4]` 或 `守护模式.bat`（会自动暂停计划任务） |
 
-### 定时任务（推荐）
+## 命令行（可选）
 
-以管理员打开 PowerShell：
+| 命令 | 说明 |
+|------|------|
+| `python AutoLogin.py --menu` | 交互菜单 |
+| `python AutoLogin.py --once` | 单次检测并登录 |
+| `python AutoLogin.py --check` | 仅检测状态 |
+| `python AutoLogin.py --watch` | 前台守护循环 |
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "D:\wifi\aust-campus-login\安装定时任务.ps1"
-```
+计划任务静默执行：`pythonw AutoLogin.py --once --scheduled --quiet`
 
-将创建 **每 5 分钟** 运行一次的 `AUST-Campus-Login-Watchdog` 任务（无弹窗、写日志）。
+日志：`logs/campus-login.log`
 
-日志位置：
+## 检测原理
 
-- `logs/campus-login.log` — 主日志  
-- `logs/task.log` — 计划任务 stdout
-
-### 登录成功后重启 Cloudflare Tunnel（可选）
-
-在 `config.yml` 中取消注释：
-
-```yaml
-post_login_cmd: "pm2 restart cloudflared"
-```
+1. **外网探测**：`generate_204` / `msftconnecttest`，只有真连通才算在线  
+2. **门户检测**：读取 `10.255.0.19` 页面中的 `Dr.COMWebLoginID_1` / `_0`  
+3. **登录方式**：Dr.COM 标准 GET + JSON 回调  
 
 ## 运营商对照
 
@@ -63,7 +64,15 @@ post_login_cmd: "pm2 restart cloudflared"
 | mobile | @cmcc |
 | jzg | @jzg |
 
-## 删除定时任务
+## 可选：登录成功后执行命令
+
+在 `config.yml` 中设置：
+
+```yaml
+post_login_cmd: "pm2 restart cloudflared"
+```
+
+## 彻底删除计划任务
 
 ```powershell
 Unregister-ScheduledTask -TaskName "AUST-Campus-Login-Watchdog" -Confirm:$false

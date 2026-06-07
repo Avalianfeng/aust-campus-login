@@ -22,5 +22,9 @@ verify_delay: 2
 # 守护模式检测间隔（秒），--watch 时使用
 watch_interval: 300
 
+# 后台静默保活总开关（计划任务读取；false 时任务触发但不检测）
+# 推荐在「管理.bat」菜单 [2]/[3] 切换，无需手改
+auto_keepalive: false
+
 # 登录成功后可选执行的命令（例如重启 cloudflared）
 # post_login_cmd: "pm2 restart cloudflared"
